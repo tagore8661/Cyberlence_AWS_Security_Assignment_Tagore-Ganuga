@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create a public subnet and route to an existing Internet Gateway
+Parameters:
+  VpcId:
+    Type: String
+    Description: ID of the VPC in which to create the subnet
+  InternetGatewayId:
+    Type: String
+    Description: ID of an existing Internet Gateway to route traffic to
+  RouteTableId:
+    Type: String
+    Description: Optional existing Route Table ID to associate the subnet with (leave empty to create a new route table)
+    Default: ""
+  SubnetId:
+    Type: String
+    Description: Optional existing Subnet ID to use instead of creating a new subnet
+    Default: ""
+  PublicCidr:
+    Type: String
+    Description: CIDR block for the public subnet (e.g. 10.0.1.0/24)
+Conditions:
+  UseProvidedRouteTable: !Not [ !Equals [ !Ref RouteTableId, "" ] ]
+  CreateSubnet: !Equals [ !Ref SubnetId, "" ]
+  CreateRoute: !Equals [ !Ref RouteTableId, "" ]
+  CreateAssoc: !And [ !Equals [ !Ref SubnetId, "" ], !Equals [ !Ref RouteTableId, "" ] ]
+
+Resources:
+
+  CFNPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Condition: CreateSubnet
+    Properties:
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref PublicCidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cfn-public-subnet
+
+  CFNPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+
+  CFNPublicRoute:
+    Condition: CreateRoute
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !If [ UseProvidedRouteTable, !Ref RouteTableId, !Ref CFNPublicRouteTable ]
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayId
+
+  CFNRouteTableAssoc:
+    #Condition: CreateAssoc
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !If [ CreateSubnet, !Ref CFNPublicSubnet, !Ref SubnetId ]
+      #RouteTableId: !If [ UseProvidedRouteTable, !Ref RouteTableId, !Ref CFNPublicRouteTable ]
+      #RouteTableId: !If [ !Ref RouteTableId, !Ref CFNPublicRouteTable ]
+      RouteTableId: !Ref RouteTableId
+
+Outputs:
+  PublicSubnetId:
+    Description: ID of the created public subnet
+    Value: !If [ CreateSubnet, !Ref CFNPublicSubnet, !Ref SubnetId ]
