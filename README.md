@@ -41,12 +41,6 @@ cd <repository-name>
 
 ### Step 2: Deploy Infrastructure
 
-**Option 1: Create Manually**
-
-See **CLOUD_MANUAL_SETUP.md** in this repository, for step-by-step instructions on how to Create AWS infrastructure manually.
-
-**Option 2: Create by Using Terraform (recommended)**
-
 ***Terraform Deployment:***
 ```powershell
 cd .\terraform
@@ -133,7 +127,7 @@ The API will be available at:
 ---
 ## For Detailed Testing with Postman
 
-See **POSTMAN_TESTING.md** in this repository, for step-by-step instructions on how to test all three endpoints using Postman with examples.
+See ***POSTMAN_TESTING.md*** in this repository, for step-by-step instructions on how to test all three endpoints using Postman with examples.
 
 ---
 
